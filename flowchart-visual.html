@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visual Flowchart - School Absensi</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background-color: #f8fafc;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        width: 95%;
+        max-width: 1200px;
+      }
+      h1 {
+        color: #1e293b;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Alur Sistem School Absensi</h1>
+      <div class="mermaid">
+        graph TD %% Nodes Begin(["Mulai"]) Login["Halaman Login"] Auth{"Validasi
+        Akun"} RoleDecide{"Cek Role"} DashAdmin["Dashboard Admin"]
+        DashGuru["Dashboard Guru"] DashSiswa["Dashboard Siswa"]
+        DashKepsek["Dashboard Kepsek"] AdminMaster["Kelola Data Master (Siswa,
+        Guru, Kelas, Mapel)"] AdminJadwal["Atur Jadwal & Blok Minggu"]
+        AdminRekap["Generate Laporan (Excel/PDF)"] GuruJadwal["Pilih Jadwal
+        Mengajar"] GuruQR["Generate QR Code Sesi"] GuruMonitor["Monitoring
+        Kehadiran Real-time"] GuruIzin["Review Pengajuan Izin"]
+        SiswaAbsenHarian["Absensi Harian"] SiswaAbsenMapel["Scan QR Absensi
+        Mapel"] SiswaIzin["Ajukan Izin/Sakit"] Finish(["Selesai"]) %%
+        Connections Begin --> Login Login --> Auth Auth -->|Gagal| Login Auth
+        -->|Sukses| RoleDecide RoleDecide -->|Admin| DashAdmin RoleDecide
+        -->|Guru| DashGuru RoleDecide -->|Siswa| DashSiswa RoleDecide
+        -->|Kepsek| DashKepsek DashAdmin --> AdminMaster DashAdmin -->
+        AdminJadwal DashAdmin --> AdminRekap DashGuru --> GuruJadwal DashGuru
+        --> GuruIzin GuruJadwal --> GuruQR GuruQR --> GuruMonitor DashSiswa -->
+        SiswaAbsenHarian DashSiswa --> SiswaAbsenMapel DashSiswa --> SiswaIzin
+        SiswaAbsenMapel -.->|Scan| GuruQR SiswaIzin -.->|Submit| GuruIzin
+        GuruMonitor --> Finish AdminRekap --> Finish SiswaAbsenHarian --> Finish
+        DashKepsek --> AdminRekap %% Styling style Begin
+        fill:#f97316,stroke:#ea580c,color:#fff style Finish
+        fill:#f97316,stroke:#ea580c,color:#fff style RoleDecide
+        fill:#0ea5e9,stroke:#0284c7,color:#fff style Auth
+        fill:#0ea5e9,stroke:#0284c7,color:#fff style DashAdmin
+        fill:#4f46e5,stroke:#3730a3,color:#fff style DashGuru
+        fill:#10b981,stroke:#059669,color:#fff style DashSiswa
+        fill:#f59e0b,stroke:#d97706,color:#fff
+      </div>
+    </div>
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "neutral",
+        securityLevel: "loose",
+      });
+    </script>
+  </body>
+</html>

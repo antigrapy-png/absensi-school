@@ -1,0 +1,104 @@
+================================================================
+  AbsensiKu — Sistem Absensi Sekolah v5.0
+  SMK Negeri 1 Babelan
+================================================================
+
+CARA MENJALANKAN APLIKASI
+--------------------------
+
+PERTAMA KALI (setup awal):
+  1. Buka terminal / Git Bash di folder school-absensi
+  2. Install dependencies:
+       npm install
+
+  3. Setup database (hanya sekali):
+       mysql -u root < schema.sql
+
+  4. Ubah nama database di file .env (jika perlu):
+       DB_NAME=school_absensi
+
+  5. Isi data awal (admin, guru, siswa, kelas):
+       npm run seed
+
+MENJALANKAN SERVER SETIAP HARI:
+  1. Buka terminal di folder school-absensi
+  2. Jalankan perintah:
+       npm run dev
+
+  3. Tunggu sampai muncul:
+       🚀 Server berjalan di http://localhost:3001
+       ✅ Database connected
+
+  4. Buka browser, ketik:
+       http://localhost:3001
+
+================================================================
+AKUN LOGIN
+================================================================
+
+  Admin:
+    Email    : admin1@school.com
+    Password : admin123
+
+  Guru (login pakai NIP):
+    NIP      : NIP000001
+    Password : GuruSmkn1babelan
+
+  Siswa (login pakai NIS):
+    NIS      : 202600001
+    Password : Smkn1babelan
+
+================================================================
+JIKA ADA MASALAH
+================================================================
+
+ERROR: port 3000 / 3001 already in use
+  Solusi: Buka PowerShell (bukan Git Bash), ketik:
+    Stop-Process -Name node -Force
+  Lalu jalankan npm run dev lagi.
+
+ERROR: disk full saat npm run dev
+  Solusi: Bersihkan cache npm:
+    npm cache clean --force
+  Lalu jalankan npm run dev lagi.
+
+ERROR: Database tidak connect
+  Pastikan MySQL sudah berjalan.
+  Cek file .env — pastikan DB_NAME=school_absensi
+
+ERROR: Seeding gagal foreign key
+  Seeder sudah otomatis disable FK check.
+  Jika masih error, jalankan dulu:
+    mysql -u root < schema.sql
+  Lalu jalankan lagi:
+    npm run seed
+
+================================================================
+STRUKTUR FILE PENTING
+================================================================
+
+school-absensi/
+  .env                  → Konfigurasi database & port
+  schema.sql            → Struktur database (jalankan sekali)
+  backend/
+    app.js              → Entry point server
+    seeders/seeder.js   → Script isi data awal
+    modules/            → Semua modul API (absensi, guru, dll)
+  public/js/main.js     → Seluruh UI frontend (SPA)
+  views/index.html      → Halaman utama HTML
+
+konfigurasi-jadwal.json → Urutan jurusan untuk sistem blok minggu
+                          (edit untuk ubah urutan jurusan)
+
+================================================================
+CATATAN PENTING
+================================================================
+
+- Setelah ubah .env, restart server (Ctrl+C lalu npm run dev)
+- Setelah ubah schema.sql, jalankan mysql -u root < schema.sql
+  PERINGATAN: ini akan hapus semua data! Lakukan hanya saat reset.
+- Setelah npm run seed, semua data lama terhapus dan diganti baru.
+- Aplikasi bisa diakses dari HP di jaringan yang sama dengan:
+    http://[IP-KOMPUTER]:3001
+
+================================================================

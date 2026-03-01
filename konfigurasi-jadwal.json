@@ -1,0 +1,65 @@
+{
+  "_keterangan": "File ini mengatur urutan jurusan untuk sistem blok minggu. Edit sesuai kebutuhan.",
+  "_panduan": {
+    "urutan_ganjil": "Jurusan ber-urutan GANJIL (1,3,5,...) = PRAKTEK di minggu ganjil, TEORI di minggu genap",
+    "urutan_genap": "Jurusan ber-urutan GENAP (2,4,...) = TEORI di minggu ganjil, PRAKTEK di minggu genap",
+    "cara_ubah": "Ubah angka 'urutan' untuk mengatur posisi jurusan. Urutan 1 = Jurusan 1, Urutan 2 = Jurusan 2, dst."
+  },
+
+  "jurusan": [
+    {
+      "kode": "PBS",
+      "nama": "Perbankan Syariah",
+      "urutan": 1,
+      "kelompok": "Jurusan 1 (Praktek Minggu Ganjil)"
+    },
+    {
+      "kode": "RPL",
+      "nama": "Rekayasa Perangkat Lunak",
+      "urutan": 2,
+      "kelompok": "Jurusan 2 (Praktek Minggu Genap)"
+    },
+    {
+      "kode": "TBO",
+      "nama": "Teknik Bisnis dan Otomotif",
+      "urutan": 3,
+      "kelompok": "Jurusan 1 (Praktek Minggu Ganjil)"
+    },
+    {
+      "kode": "TEI",
+      "nama": "Teknik Elektronika Industri",
+      "urutan": 4,
+      "kelompok": "Jurusan 2 (Praktek Minggu Genap)"
+    },
+    {
+      "kode": "TKR",
+      "nama": "Teknik Kendaraan Ringan",
+      "urutan": 5,
+      "kelompok": "Jurusan 1 (Praktek Minggu Ganjil)"
+    }
+  ],
+
+  "kelas_per_jurusan": 2,
+  "_keterangan_kelas": "Jumlah kelas per jurusan per tingkat. Kelas 1 = Jurusan 1, Kelas 2 = Jurusan 2.",
+
+  "jadwal_blok": {
+    "minggu_ganjil": {
+      "jurusan_1": "Praktek",
+      "jurusan_2": "Teori"
+    },
+    "minggu_genap": {
+      "jurusan_1": "Teori",
+      "jurusan_2": "Praktek"
+    }
+  },
+
+  "tahun_ajaran_aktif": "2026/2027",
+  "semester_aktif": "ganjil",
+
+  "_catatan": [
+    "Setelah mengubah urutan jurusan, jalankan: npm run seed (di folder school-absensi)",
+    "Pastikan urutan tidak ada yang sama (duplikat)",
+    "Urutan ganjil (1,3,5) = kelompok Jurusan 1",
+    "Urutan genap (2,4) = kelompok Jurusan 2"
+  ]
+}

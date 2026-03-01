@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="id" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AbsensiKu — Sistem Absensi Sekolah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              admin: {
+                50: "#eff6ff",
+                100: "#dbeafe",
+                400: "#60a5fa",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+                800: "#1e40af",
+                900: "#1e3a8a",
+              },
+              guru: {
+                50: "#f0fdf4",
+                100: "#dcfce7",
+                400: "#4ade80",
+                500: "#22c55e",
+                600: "#16a34a",
+                700: "#15803d",
+                800: "#166534",
+                900: "#14532d",
+              },
+              siswa: {
+                50: "#fdf4ff",
+                100: "#fae8ff",
+                400: "#c084fc",
+                500: "#a855f7",
+                600: "#9333ea",
+                700: "#7e22ce",
+                800: "#6b21a8",
+                900: "#581c87",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        transition: background-color 0.25s;
+      }
+
+      /* SIDEBAR THEMES */
+      .theme-admin #sidebar {
+        background: linear-gradient(
+          165deg,
+          #0f172a 0%,
+          #1e3a8a 55%,
+          #1d4ed8 100%
+        );
+      }
+      .theme-guru #sidebar {
+        background: linear-gradient(
+          165deg,
+          #052e16 0%,
+          #14532d 55%,
+          #166534 100%
+        );
+      }
+      .theme-siswa #sidebar {
+        background: linear-gradient(
+          165deg,
+          #2e1065 0%,
+          #581c87 55%,
+          #7e22ce 100%
+        );
+      }
+
+      /* TOPBAR ACCENT LINE */
+      .theme-admin #topbar {
+        border-bottom: 2px solid #3b82f6;
+      }
+      .theme-guru #topbar {
+        border-bottom: 2px solid #22c55e;
+      }
+      .theme-siswa #topbar {
+        border-bottom: 2px solid #a855f7;
+      }
+
+      /* SIDEBAR NAV LINKS */
+      .sidebar-link {
+        border-left: 3px solid transparent;
+        transition: all 0.15s;
+        color: rgba(255, 255, 255, 0.65);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        text-decoration: none;
+      }
+      .sidebar-link:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+      }
+      .theme-admin .sidebar-link.active {
+        background: rgba(59, 130, 246, 0.28);
+        border-left-color: #60a5fa;
+        color: white;
+        font-weight: 700;
+      }
+      .theme-guru .sidebar-link.active {
+        background: rgba(34, 197, 94, 0.22);
+        border-left-color: #4ade80;
+        color: white;
+        font-weight: 700;
+      }
+      .theme-siswa .sidebar-link.active {
+        background: rgba(168, 85, 247, 0.28);
+        border-left-color: #c084fc;
+        color: white;
+        font-weight: 700;
+      }
+
+      /* DARK MODE OVERRIDES */
+      .dark .bg-white {
+        background-color: #1e293b !important;
+      }
+      .dark .bg-gray-50 {
+        background-color: #0f172a !important;
+      }
+      .dark .bg-gray-100 {
+        background-color: #1e293b !important;
+      }
+      .dark .border-gray-100,
+      .dark .border-gray-200,
+      .dark .border-gray-300 {
+        border-color: #334155 !important;
+      }
+      .dark .text-gray-800 {
+        color: #f8fafc !important;
+      } /* Lightened from #f1f5f9 */
+      .dark .text-gray-700 {
+        color: #e2e8f0 !important;
+      } /* Lightened from #cbd5e1 */
+      .dark .text-gray-600 {
+        color: #cbd5e1 !important;
+      } /* Lightened from #94a3b8 */
+      .dark .text-gray-500 {
+        color: #94a3b8 !important;
+      } /* Lightened from #64748b */
+      .dark .text-gray-400 {
+        color: #64748b !important;
+      } /* Lightened from #475569 */
+      .dark input,
+      .dark select,
+      .dark textarea {
+        background-color: #0f172a !important;
+        color: #f1f5f9 !important;
+        border-color: #475569 !important;
+      }
+      .dark .shadow {
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
+      }
+      .dark .table-row-hover:hover {
+        background-color: #1e293b !important;
+      }
+      .dark .hover\:bg-gray-50:hover {
+        background-color: #1e293b !important;
+      }
+      .dark .hover\:bg-gray-100:hover {
+        background-color: #334155 !important;
+      }
+      .dark .border-white\/5 {
+        border-color: rgba(255, 255, 255, 0.12) !important;
+      } /* Increase table divider contrast */
+
+      /* CARDS */
+      .card-hover {
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      }
+      .dark .card-hover:hover {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+      .table-row-hover {
+        transition: background-color 0.1s;
+      }
+      .table-row-hover:hover {
+        background-color: #f8fafc;
+      }
+
+      /* TOAST */
+      #toast {
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+      }
+      #toast.hidden {
+        opacity: 0;
+        transform: translateY(12px);
+        pointer-events: none;
+      }
+
+      /* SCROLLBAR */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      .dark ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #475569;
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      /* STATUS COLORS */
+      .st-hadir {
+        color: #166534;
+        background: #dcfce7;
+      }
+      .st-sakit {
+        color: #1e40af;
+        background: #dbeafe;
+      }
+      .st-izin {
+        color: #92400e;
+        background: #fef3c7;
+      }
+      .st-alpha {
+        color: #991b1b;
+        background: #fee2e2;
+      }
+      .dark .st-hadir {
+        color: #86efac;
+        background: rgba(34, 197, 94, 0.15);
+      }
+      .dark .st-sakit {
+        color: #93c5fd;
+        background: rgba(59, 130, 246, 0.15);
+      }
+      .dark .st-izin {
+        color: #fcd34d;
+        background: rgba(245, 158, 11, 0.15);
+      }
+      .dark .st-alpha {
+        color: #fca5a5;
+        background: rgba(239, 68, 68, 0.15);
+      }
+
+      /* MINGGU BADGES */
+      .mg-praktek {
+        color: #c2410c;
+        background: #ffedd5;
+      }
+      .mg-teori {
+        color: #1e40af;
+        background: #dbeafe;
+      }
+      .dark .mg-praktek {
+        color: #fdba74;
+        background: rgba(249, 115, 22, 0.15);
+      }
+      .dark .mg-teori {
+        color: #93c5fd;
+        background: rgba(59, 130, 246, 0.15);
+      }
+
+      /* GRADIENT STAT CARDS */
+      .grd-blue {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      }
+      .grd-green {
+        background: linear-gradient(135deg, #22c55e, #15803d);
+      }
+      .grd-purple {
+        background: linear-gradient(135deg, #a855f7, #7e22ce);
+      }
+      .grd-red {
+        background: linear-gradient(135deg, #ef4444, #b91c1c);
+      }
+      .grd-amber {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
+      .grd-teal {
+        background: linear-gradient(135deg, #14b8a6, #0f766e);
+      }
+
+      /* ANIMATIONS */
+      #mainContent > div {
+        animation: fadeUp 0.2s ease;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.06;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.1;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 dark:bg-slate-900 font-sans antialiased">
+    <!-- ========================= LOGIN PAGE ========================= -->
+    <div
+      id="loginPage"
+      class="min-h-screen flex items-center justify-center relative overflow-hidden p-4"
+    >
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-purple-950"
+      ></div>
+      <div
+        class="absolute inset-0 opacity-25"
+        style="
+          background:
+            radial-gradient(ellipse at 20% 85%, #3b82f6 0%, transparent 52%),
+            radial-gradient(ellipse at 80% 15%, #9333ea 0%, transparent 52%),
+            radial-gradient(ellipse at 55% 45%, #0ea5e9 0%, transparent 40%);
+        "
+      ></div>
+      <div
+        class="absolute w-80 h-80 rounded-full top-10 -left-20 bg-blue-500 opacity-5"
+        style="animation: pulse 5s ease-in-out infinite"
+      ></div>
+      <div
+        class="absolute w-60 h-60 rounded-full bottom-10 -right-10 bg-purple-500 opacity-5"
+        style="animation: pulse 5s ease-in-out infinite 2.5s"
+      ></div>
+
+      <div class="relative z-10 w-full max-w-md">
+        <div class="text-center mb-8">
+          <div
+            class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white/15 backdrop-blur-sm border border-white/25 mb-4 shadow-2xl"
+          >
+            <i class="fas fa-school text-4xl text-white drop-shadow"></i>
+          </div>
+          <h1 class="text-4xl font-black text-white tracking-tight drop-shadow">
+            AbsensiKu
+          </h1>
+          <p class="text-white/45 text-sm mt-1.5 tracking-wide">
+            Sistem Absensi Sekolah Digital
+          </p>
+        </div>
+
+        <div
+          class="bg-white/8 backdrop-blur-2xl rounded-3xl border border-white/15 shadow-2xl p-7"
+        >
+          <!-- Role Tabs -->
+          <div
+            class="flex gap-1 bg-black/20 rounded-2xl p-1 mb-6 border border-white/10"
+          >
+            <button
+              onclick="switchLoginRole('admin')"
+              id="tabAdmin"
+              class="role-tab active flex-1 py-2.5 rounded-xl text-blue-200 text-sm transition-all font-semibold hover:text-blue-100"
+            >
+              <i class="fas fa-user-shield mr-1.5"></i>Admin
+            </button>
+            <button
+              onclick="switchLoginRole('guru')"
+              id="tabGuru"
+              class="role-tab flex-1 py-2.5 rounded-xl text-green-200/70 text-sm transition-all hover:text-green-100"
+            >
+              <i class="fas fa-chalkboard-teacher mr-1.5"></i>Guru
+            </button>
+            <button
+              onclick="switchLoginRole('siswa')"
+              id="tabSiswa"
+              class="role-tab flex-1 py-2.5 rounded-xl text-purple-200/70 text-sm transition-all hover:text-purple-100"
+            >
+              <i class="fas fa-user-graduate mr-1.5"></i>Siswa
+            </button>
+          </div>
+
+          <form id="loginForm" class="space-y-4" onsubmit="doLogin(event)">
+            <div>
+              <label
+                id="loginIdentLabel"
+                class="block text-xs font-bold text-white/60 mb-1.5 uppercase tracking-widest"
+                >Email</label
+              >
+              <div class="relative">
+                <i
+                  id="loginIdentIcon"
+                  class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-white/45 text-sm"
+                ></i>
+                <input
+                  id="loginIdentifier"
+                  type="text"
+                  required
+                  autocomplete="username"
+                  placeholder="admin@school.com"
+                  class="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-white/40 focus:bg-white/15 text-sm font-medium transition-all"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                class="block text-xs font-bold text-white/60 mb-1.5 uppercase tracking-widest"
+                >Password</label
+              >
+              <div class="relative">
+                <i
+                  class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-white/45 text-sm"
+                ></i>
+                <input
+                  id="loginPassword"
+                  type="password"
+                  required
+                  autocomplete="current-password"
+                  placeholder="••••••••"
+                  class="w-full pl-11 pr-11 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/35 focus:outline-none focus:ring-2 focus:ring-white/40 focus:bg-white/15 text-sm font-medium transition-all"
+                />
+                <button
+                  type="button"
+                  onclick="togglePasswordVis()"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/70 transition-colors"
+                >
+                  <i id="eyeIcon" class="fas fa-eye text-sm"></i>
+                </button>
+              </div>
+            </div>
+            <div
+              id="loginError"
+              class="hidden bg-red-500/20 border border-red-400/30 text-red-200 px-4 py-3 rounded-xl text-sm flex items-center gap-2"
+            >
+              <i class="fas fa-exclamation-circle flex-shrink-0"></i
+              ><span id="loginErrMsg"></span>
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-white text-slate-900 font-black py-4 rounded-xl hover:bg-blue-50 active:scale-95 transition-all text-sm shadow-xl mt-2 tracking-wide"
+            >
+              <span id="loginBtnText"
+                ><i class="fas fa-sign-in-alt mr-2"></i>MASUK</span
+              >
+            </button>
+          </form>
+
+          <div class="mt-5 p-3 bg-white/5 border border-white/10 rounded-xl">
+            <p
+              id="loginHint"
+              class="text-center text-white/35 text-xs leading-relaxed"
+            ></p>
+          </div>
+        </div>
+        <p class="text-center text-white/15 text-xs mt-5">AbsensiKu v3.0</p>
+      </div>
+    </div>
+
+    <!-- ========================= MAIN APP ========================= -->
+    <div id="appPage" class="hidden h-screen overflow-hidden">
+      <div class="flex h-full">
+        <!-- SIDEBAR -->
+        <aside
+          id="sidebar"
+          class="w-64 flex flex-col shadow-2xl flex-shrink-0 relative"
+          style="min-height: 100vh"
+        >
+          <div
+            class="absolute inset-0 opacity-5 pointer-events-none"
+            style="
+              background-image: repeating-linear-gradient(
+                45deg,
+                white 0,
+                white 1px,
+                transparent 0,
+                transparent 50%
+              );
+              background-size: 18px 18px;
+            "
+          ></div>
+
+          <!-- Brand -->
+          <div
+            class="relative p-4 border-b border-white/10 flex items-center gap-3"
+          >
+            <div class="bg-white/20 rounded-xl p-2 flex-shrink-0 shadow-inner">
+              <i class="fas fa-school text-white text-lg w-6 text-center"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="font-black text-white text-sm tracking-wide">
+                AbsensiKu
+              </div>
+              <div class="text-white/45 text-xs truncate" id="semesterLabel">
+                —
+              </div>
+            </div>
+            <button
+              onclick="toggleDarkMode()"
+              id="darkBtn"
+              title="Toggle Tema"
+              class="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 hover:bg-white/25 flex items-center justify-center text-white/60 hover:text-white transition-all"
+            >
+              <i id="darkIcon" class="fas fa-moon text-xs"></i>
+            </button>
+          </div>
+
+          <!-- User Card -->
+          <div
+            class="relative mx-3 mt-3 mb-1.5 bg-white/10 rounded-2xl p-3 border border-white/10"
+          >
+            <div class="flex items-center gap-2.5">
+              <div
+                id="userAvatar"
+                class="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center font-black text-white text-base flex-shrink-0 shadow-inner"
+              >
+                ?
+              </div>
+              <div class="min-w-0 flex-1">
+                <div
+                  class="font-bold text-white text-sm truncate"
+                  id="userName"
+                >
+                  —
+                </div>
+                <div class="text-white/50 text-xs" id="userRoleTag">—</div>
+              </div>
+            </div>
+            <div
+              id="userExtraInfo"
+              class="mt-2 pt-2 border-t border-white/10 hidden"
+            ></div>
+          </div>
+
+          <!-- Semester selector -->
+          <div class="relative px-3 pb-2">
+            <select
+              id="globalSemesterFilter"
+              onchange="onSemesterFilterChange()"
+              class="w-full text-xs bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-white/40"
+            ></select>
+          </div>
+
+          <!-- Navigation -->
+          <nav
+            class="relative flex-1 px-2 py-1 space-y-0.5 overflow-y-auto"
+            id="sidebarNav"
+          ></nav>
+
+          <!-- Bottom buttons -->
+          <div class="relative p-2 border-t border-white/10 space-y-0.5">
+            <button
+              onclick="showChangePassword()"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-white/55 hover:text-white transition-all text-xs"
+            >
+              <i class="fas fa-key w-4 text-center flex-shrink-0"></i
+              ><span>Ubah Password</span>
+            </button>
+            <button
+              onclick="logout()"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/20 text-red-300/70 hover:text-red-200 transition-all text-xs"
+            >
+              <i class="fas fa-sign-out-alt w-4 text-center flex-shrink-0"></i
+              ><span>Keluar</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+          <!-- Topbar -->
+          <header
+            id="topbar"
+            class="bg-white dark:bg-slate-800 px-6 py-3 flex items-center justify-between shadow-sm flex-shrink-0"
+          >
+            <div>
+              <h2 class="text-base font-black text-gray-800" id="pageTitle">
+                Dashboard
+              </h2>
+              <p class="text-gray-400 text-xs" id="pageSubtitle">Memuat...</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div
+                id="weekInfoBar"
+                class="hidden sm:flex items-center gap-1.5 bg-gray-100 dark:bg-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-slate-300"
+              >
+                <i class="fas fa-calendar-week text-xs"></i>
+                <span id="weekInfoText">—</span>
+              </div>
+              <span
+                id="roleBadge"
+                class="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
+                >—</span
+              >
+            </div>
+          </header>
+
+          <!-- Content -->
+          <main
+            class="flex-1 overflow-y-auto p-5 bg-gray-50 dark:bg-slate-900"
+            id="mainContent"
+          >
+            <div class="flex items-center justify-center py-20 text-gray-400">
+              <i class="fas fa-spinner fa-spin text-3xl mr-3"></i
+              ><span>Memuat...</span>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[999] hidden">
+      <div
+        id="toastContent"
+        class="rounded-2xl shadow-2xl border px-5 py-3.5 flex items-center gap-3 min-w-72 max-w-sm"
+      >
+        <i id="toastIcon" class="text-xl flex-shrink-0"></i>
+        <span id="toastMsg" class="text-sm font-semibold flex-1"></span>
+        <button
+          onclick="document.getElementById('toast').classList.add('hidden')"
+          class="text-gray-400 hover:text-gray-600 ml-1 flex-shrink-0"
+        >
+          <i class="fas fa-times text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL -->
+    <div
+      id="modal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[998] hidden"
+      style="align-items: center; justify-content: center"
+      onclick="handleModalBg(event)"
+    >
+      <div
+        id="modalBox"
+        class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4"
+      >
+        <div
+          class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800 z-10 rounded-t-2xl"
+        >
+          <h3
+            id="modalTitle"
+            class="text-base font-black text-gray-800 dark:text-white"
+          >
+            —
+          </h3>
+          <button
+            onclick="closeModal()"
+            class="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all"
+          >
+            <i class="fas fa-times text-sm"></i>
+          </button>
+        </div>
+        <div id="modalBody" class="p-5"></div>
+      </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+  </body>
+</html>
