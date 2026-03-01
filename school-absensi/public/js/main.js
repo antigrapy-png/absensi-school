@@ -2,13 +2,15 @@
 // AbsensiKu SPA — v3.0
 // ============================================================
 
-const API = "/api";
+const API = "http://localhost:3001/api";
 let currentUser = null;
 let activeSemesterId = null;
 let allSemesters = [];
 let selectedSemesterId = null;
 let currentLoginRole = "admin";
 let chartInstances = {};
+let currentKelasFilter = null;
+let currentTipeFilter = "semua";
 
 // ============================================================
 // API
@@ -582,13 +584,84 @@ async function renderDashboard() {
       }
     } else if (currentUser.role === "guru") {
       const ks = d.kelasStats || {};
+      const today = new Date().toLocaleDateString("id-ID", { weekday: "long" });
+      const todayJadwal =
+        d.jadwals?.filter(
+          (j) => j.hari.toLowerCase() === today.toLowerCase(),
+        ) || [];
+
       setContent(`
-        <div class="space-y-5">
+        <div class="space-y-6">
+          <!-- Aksi Cepat -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div onclick="navigateTo('absensi-harian')" class="bg-blue-600 text-white rounded-2xl p-4 shadow-lg cursor-pointer hover:bg-blue-700 transition-all card-hover flex flex-col items-center justify-center gap-2 aspect-square lg:aspect-auto">
+              <i class="fas fa-clipboard-check text-2xl"></i>
+              <span class="text-xs font-bold uppercase">Absensi Harian</span>
+            </div>
+            <div onclick="navigateTo('absensi-mapel')" class="bg-green-600 text-white rounded-2xl p-4 shadow-lg cursor-pointer hover:bg-green-700 transition-all card-hover flex flex-col items-center justify-center gap-2 aspect-square lg:aspect-auto">
+              <i class="fas fa-clipboard-list text-2xl"></i>
+              <span class="text-xs font-bold uppercase">Absensi Mapel</span>
+            </div>
+            <div onclick="navigateTo('rekap')" class="bg-purple-600 text-white rounded-2xl p-4 shadow-lg cursor-pointer hover:bg-purple-700 transition-all card-hover flex flex-col items-center justify-center gap-2 aspect-square lg:aspect-auto">
+              <i class="fas fa-chart-bar text-2xl"></i>
+              <span class="text-xs font-bold uppercase">Rekap Absensi</span>
+            </div>
+            <div onclick="navigateTo('jadwal')" class="bg-amber-500 text-white rounded-2xl p-4 shadow-lg cursor-pointer hover:bg-amber-600 transition-all card-hover flex flex-col items-center justify-center gap-2 aspect-square lg:aspect-auto">
+              <i class="fas fa-calendar-week text-2xl"></i>
+              <span class="text-xs font-bold uppercase">Jadwal Full</span>
+            </div>
+          </div>
+
+          <!-- Highlight Jadwal Hari Ini -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-blue-100 dark:border-blue-900/30 overflow-hidden">
+            <div class="bg-blue-50 dark:bg-blue-900/20 px-5 py-3 border-b border-blue-100 dark:border-blue-900/30 flex justify-between items-center">
+              <h3 class="font-black text-blue-800 dark:text-blue-300 text-xs uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-clock animate-pulse"></i> Jadwal Hari Ini (${today})
+              </h3>
+              ${todayJadwal.length ? `<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black">${todayJadwal.length} SESI</span>` : ""}
+            </div>
+            <div class="p-2">
+              ${
+                todayJadwal.length
+                  ? `
+                <div class="grid gap-2">
+                  ${todayJadwal
+                    .map(
+                      (j) => `
+                    <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-slate-600">
+                      <div class="bg-gray-100 dark:bg-slate-700 rounded-lg px-3 py-1 text-center min-w-[70px]">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Mulai</p>
+                        <p class="text-sm font-black text-gray-700 dark:text-gray-200">${j.jam_mulai?.slice(0, 5)}</p>
+                      </div>
+                      <div class="flex-1">
+                        <p class="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">${j.mapel}</p>
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${j.kelas}</p>
+                      </div>
+                      <div class="flex flex-col items-end gap-1">
+                        ${tipeBadge(j.tipe_sesi)}
+                        <p class="text-[10px] font-bold text-gray-400">${j.jam_selesai?.slice(0, 5)} selesai</p>
+                      </div>
+                    </div>`,
+                    )
+                    .join("")}
+                </div>`
+                  : `
+                <div class="py-8 text-center">
+                  <i class="fas fa-calendar-day text-gray-200 dark:text-gray-700 text-4xl mb-2"></i>
+                  <p class="text-gray-400 text-sm italic">Tidak ada jadwal mengajar hari ini.</p>
+                </div>`
+              }
+            </div>
+          </div>
+
           ${
             d.isWalas && ks.total
               ? `
           <div>
-            <h3 class="text-sm font-black text-gray-500 dark:text-slate-500 uppercase tracking-wider mb-3">Statistik Kelas Wali (${d.namaKelas || ""})</h3>
+            <div class="flex items-center justify-between mb-3 px-1">
+              <h3 class="text-sm font-black text-gray-500 dark:text-slate-500 uppercase tracking-wider">Statistik Kelas Wali (${d.namaKelas || ""})</h3>
+              <span class="text-[10px] font-bold text-gray-400">Update Terakhir: Hari Ini</span>
+            </div>
             <div class="grid grid-cols-4 gap-3">
               ${miniCard("Hadir", ks.hadir || 0, "text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400")}
               ${miniCard("Sakit", ks.sakit || 0, "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400")}
@@ -598,32 +671,34 @@ async function renderDashboard() {
           </div>`
               : ""
           }
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow overflow-hidden card-hover">
-            <div class="px-5 py-4 border-b border-gray-100 dark:border-slate-700">
-              <h3 class="font-black text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wider">Jadwal Mengajar Saya</h3>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-gray-50/50 dark:bg-slate-900/20">
+              <h3 class="font-black text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wider">Jadwal Mengajar Seluruhnya</h3>
+              <button onclick="navigateTo('jadwal')" class="text-blue-600 text-[10px] font-black uppercase hover:underline">Kelola Jadwal <i class="fas fa-arrow-right ml-1"></i></button>
             </div>
             ${
               d.jadwals?.length
                 ? `
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-slate-900"><tr>
-                  <th class="px-5 py-3 text-left font-bold text-gray-500 text-xs uppercase">Hari</th>
-                  <th class="px-5 py-3 text-left font-bold text-gray-500 text-xs uppercase">Jam</th>
-                  <th class="px-5 py-3 text-left font-bold text-gray-500 text-xs uppercase">Kelas</th>
-                  <th class="px-5 py-3 text-left font-bold text-gray-500 text-xs uppercase">Mapel</th>
-                  <th class="px-5 py-3 text-left font-bold text-gray-500 text-xs uppercase">Tipe</th>
-                  <th class="px-5 py-3 text-left font-bold text-gray-500 text-xs uppercase">Pola Minggu</th>
+                <thead class="bg-gray-50/80 dark:bg-slate-900/50"><tr>
+                  <th class="px-5 py-3 text-left font-bold text-gray-400 text-[10px] uppercase tracking-tighter">Hari</th>
+                  <th class="px-5 py-3 text-left font-bold text-gray-400 text-[10px] uppercase tracking-tighter">Jam</th>
+                  <th class="px-5 py-3 text-left font-bold text-gray-400 text-[10px] uppercase tracking-tighter">Kelas</th>
+                  <th class="px-5 py-3 text-left font-bold text-gray-400 text-[10px] uppercase tracking-tighter">Mapel</th>
+                  <th class="px-5 py-3 text-left font-bold text-gray-400 text-[10px] uppercase tracking-tighter">Tipe</th>
+                  <th class="px-5 py-3 text-left font-bold text-gray-400 text-[10px] uppercase tracking-tighter">Pola</th>
                 </tr></thead>
                 <tbody>${d.jadwals
                   .map(
                     (
                       j,
                     ) => `<tr class="border-t dark:border-slate-700 table-row-hover">
-                  <td class="px-5 py-3 font-semibold">${j.hari}</td>
-                  <td class="px-5 py-3 font-mono text-xs text-gray-500">${j.jam_mulai?.slice(0, 5)}–${j.jam_selesai?.slice(0, 5)}</td>
-                  <td class="px-5 py-3">${j.kelas}</td>
-                  <td class="px-5 py-3">${j.mapel}</td>
+                  <td class="px-5 py-3 font-bold text-gray-700 dark:text-gray-300">${j.hari}</td>
+                  <td class="px-5 py-3 font-mono text-[10px] text-gray-500">${j.jam_mulai?.slice(0, 5)}–${j.jam_selesai?.slice(0, 5)}</td>
+                  <td class="px-5 py-3 font-semibold text-gray-600 dark:text-gray-400">${j.kelas}</td>
+                  <td class="px-5 py-3 font-bold text-blue-600 dark:text-blue-400">${j.mapel}</td>
                   <td class="px-5 py-3">${tipeBadge(j.tipe_sesi)}</td>
                   <td class="px-5 py-3">${polaBadge(j.pola_minggu)}</td>
                 </tr>`,
@@ -631,7 +706,7 @@ async function renderDashboard() {
                   .join("")}</tbody>
               </table>
             </div>`
-                : '<p class="text-center py-10 text-gray-400 text-sm">Belum ada jadwal.</p>'
+                : '<p class="text-center py-10 text-gray-400 text-sm italic">Belum ada jadwal yang diatur.</p>'
             }
           </div>
         </div>`);
@@ -639,46 +714,128 @@ async function renderDashboard() {
       // SISWA DASHBOARD
       const s = d.stats || {};
       const pctS = s.total ? Math.round((s.hadir / s.total) * 100) : 0;
+      const today = new Date().toLocaleDateString("id-ID", { weekday: "long" });
+
+      // Build Jadwal Siswa (dari data kelas yang sama)
+      // Catatan: Jadwal siswa diambil dari jadwal_mengajar dengan kelas_id yang sama
+      // Di siswa dashboard, d.jadwals mungkin belum dikirim backend, kita cek ketersediaannya
+      const todayJadwal =
+        d.jadwals?.filter(
+          (j) => j.hari.toLowerCase() === today.toLowerCase(),
+        ) || [];
+
       setContent(`
-        <div class="space-y-5">
+        <div class="space-y-6">
           <!-- Profile Card -->
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow p-5 card-hover">
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-2xl bg-purple-100 dark:bg-purple-950/30 flex items-center justify-center font-black text-purple-700 dark:text-purple-300 text-2xl flex-shrink-0">
+          <div class="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl shadow-xl p-6 text-white card-hover relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-purple-900/20 rounded-full blur-2xl"></div>
+            
+            <div class="flex items-center gap-5 relative z-10">
+              <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center font-black text-white text-3xl shadow-inner">
                 ${currentUser.nama.charAt(0).toUpperCase()}
               </div>
-              <div>
-                <h3 class="font-black text-gray-800 text-lg">${currentUser.nama}</h3>
-                <p class="text-gray-500 text-sm">${currentUser.kelas_nama || "Kelas belum ditentukan"}</p>
-                <div class="flex gap-2 mt-1">
-                  ${currentUser.nis ? `<span class="text-xs bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-mono">NIS: ${currentUser.nis}</span>` : ""}
-                  ${currentUser.is_ketua_kelas ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full"><i class="fas fa-crown mr-1"></i>Ketua Kelas</span>' : ""}
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                   <h3 class="font-black text-2xl tracking-tight">${currentUser.nama}</h3>
+                   ${currentUser.is_ketua_kelas ? '<span class="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg animate-bounce mt-1"> ketua_kelas </span>' : ""}
+                </div>
+                <p class="text-purple-100/80 font-medium">${currentUser.kelas_nama || "Kelas belum ditentukan"}</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  ${currentUser.nis ? `<span class="text-[10px] bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg font-mono tracking-wider border border-white/10">NIS: ${currentUser.nis}</span>` : ""}
+                  <span class="text-[10px] bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg font-bold border border-white/10 uppercase tracking-widest">${selectedSemesterId ? allSemesters.find((sem) => sem.id == selectedSemesterId)?.nama || "Semester" : "Semester"}</span>
                 </div>
               </div>
             </div>
           </div>
-          <div class="grid grid-cols-4 gap-3">
-            ${miniCard("Hadir", s.hadir || 0, "text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400")}
-            ${miniCard("Sakit", s.sakit || 0, "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400")}
-            ${miniCard("Izin", s.izin || 0, "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400")}
-            ${miniCard("Alpha", s.alpha || 0, "text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400")}
-          </div>
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow p-5 card-hover">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-black text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wider">Tingkat Kehadiran</h3>
-              <span class="font-black text-2xl ${pctS >= 80 ? "text-green-600" : pctS >= 60 ? "text-amber-600" : "text-red-600"}">${pctS}%</span>
+
+          <!-- Aksi Cepat Siswa -->
+          <div class="grid grid-cols-2 gap-4">
+            <div onclick="navigateTo('absensi-siswa')" class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg flex items-center gap-4 cursor-pointer hover:shadow-xl transition-all border-b-4 border-purple-500 card-hover">
+               <div class="w-12 h-12 bg-purple-100 dark:bg-purple-950/30 text-purple-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                 <i class="fas fa-history"></i>
+               </div>
+               <div>
+                 <p class="font-black text-gray-800 dark:text-white text-sm">Riwayat Absen</p>
+                 <p class="text-[10px] text-gray-500 font-bold uppercase">Lihat kehadiran harian</p>
+               </div>
             </div>
-            <div class="relative h-5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div class="${pctS >= 80 ? "bg-green-500" : pctS >= 60 ? "bg-amber-500" : "bg-red-500"} h-full rounded-full transition-all duration-700" style="width:${pctS}%"></div>
+            <div onclick="navigateTo('rekap-siswa')" class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg flex items-center gap-4 cursor-pointer hover:shadow-xl transition-all border-b-4 border-blue-500 card-hover">
+               <div class="w-12 h-12 bg-blue-100 dark:bg-blue-950/30 text-blue-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
+                 <i class="fas fa-chart-pie"></i>
+               </div>
+               <div>
+                 <p class="font-black text-gray-800 dark:text-white text-sm">Statistik Saya</p>
+                 <p class="text-[10px] text-gray-500 font-bold uppercase">Persentase kehadiran</p>
+               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-2">${s.hadir || 0} hadir dari ${s.total || 0} hari</p>
           </div>
+
+          <!-- Jadwal Hari Ini Siswa -->
+           <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-purple-100 dark:border-purple-900/30 overflow-hidden">
+            <div class="bg-purple-50 dark:bg-purple-900/20 px-5 py-3 border-b border-purple-100 dark:border-purple-900/30 flex justify-between items-center">
+              <h3 class="font-black text-purple-800 dark:text-purple-300 text-xs uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-calendar-day"></i> Jadwal Belajar - ${today}
+              </h3>
+            </div>
+            <div class="p-2">
+              ${
+                todayJadwal.length
+                  ? `
+                <div class="grid gap-2">
+                  ${todayJadwal
+                    .map(
+                      (j) => `
+                    <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-slate-600">
+                      <div class="bg-purple-50 dark:bg-purple-900/30 rounded-lg px-3 py-1 text-center min-w-[70px]">
+                        <p class="text-sm font-black text-purple-700 dark:text-purple-300">${j.jam_mulai?.slice(0, 5)}</p>
+                      </div>
+                      <div class="flex-1">
+                        <p class="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-wider">${j.mapel}</p>
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-200">${j.guru_nama || "Guru Mapel"}</p>
+                      </div>
+                      ${tipeBadge(j.tipe_sesi)}
+                    </div>`,
+                    )
+                    .join("")}
+                </div>`
+                  : `
+                <div class="py-8 text-center">
+                  <i class="fas fa-mug-hot text-gray-200 dark:text-gray-700 text-4xl mb-2"></i>
+                  <p class="text-gray-400 text-sm italic">Hore! Tidak ada jadwal belajar hari ini.</p>
+                </div>`
+              }
+            </div>
+          </div>
+
+          <!-- Attendance Stats -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            ${miniCard("Hadir", s.hadir || 0, "text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400 border-l-4 border-green-500")}
+            ${miniCard("Sakit", s.sakit || 0, "text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400 border-l-4 border-blue-500")}
+            ${miniCard("Izin", s.izin || 0, "text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 border-l-4 border-amber-500")}
+            ${miniCard("Alpha", s.alpha || 0, "text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400 border-l-4 border-red-500")}
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow shadow-purple-100 dark:shadow-none p-5 card-hover border-t-4 border-purple-600">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-black text-gray-700 dark:text-slate-300 text-xs uppercase tracking-widest">Persentase Kehadiran</h3>
+              <span class="font-black text-3xl ${pctS >= 80 ? "text-green-600 font-outline-green" : pctS >= 60 ? "text-amber-600" : "text-red-600"}">${pctS}%</span>
+            </div>
+            <div class="relative h-6 bg-gray-100 dark:bg-slate-900/50 rounded-full overflow-hidden shadow-inner p-1">
+              <div class="${pctS >= 80 ? "bg-gradient-to-r from-green-400 to-green-600" : pctS >= 60 ? "bg-gradient-to-r from-amber-400 to-amber-600" : "bg-gradient-to-r from-red-400 to-red-600"} h-full rounded-full transition-all duration-1000 ease-out shadow-lg" style="width:${pctS}%"></div>
+            </div>
+            <div class="flex justify-between mt-3 px-1">
+               <p class="text-[10px] font-bold text-gray-400 uppercase">${s.hadir || 0} Hari Masuk</p>
+               <p class="text-[10px] font-bold text-gray-400 uppercase">Target: 100%</p>
+            </div>
+          </div>
+
           ${
             d.monthly?.length
               ? `
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow p-5 card-hover">
-            <h3 class="font-black text-gray-700 dark:text-slate-300 mb-4 text-sm uppercase tracking-wider">Tren Kehadiran Bulanan</h3>
-            <canvas id="chartMonthly" height="150"></canvas>
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow p-5 card-hover border border-gray-100 dark:border-slate-700">
+            <h3 class="font-black text-gray-700 dark:text-slate-300 mb-6 text-xs uppercase tracking-widest">Tren Kehadiran Bulanan</h3>
+            <canvas id="chartMonthly" height="180"></canvas>
           </div>`
               : ""
           }
@@ -1781,24 +1938,45 @@ async function renderJadwal() {
   loadingUI();
   try {
     const taParam = `tahun_ajaran_id=${selectedSemesterId}`;
+    const isAdmin = currentUser.role === "admin";
     const guruParam =
       currentUser.role === "guru" && currentUser.guru_id
         ? `&guru_id=${currentUser.guru_id}`
         : "";
+    const baseRequests = [
+      apiGet(`/jadwal?${taParam}${guruParam}`),
+      apiGet(`/kelas?${taParam}`),
+      isAdmin ? apiGet("/guru") : Promise.resolve({ data: [] }),
+      apiGet("/mapel"),
+      apiGet("/jurusan"),
+    ];
     const [jadwalRes, kelasRes, guruRes, mapelRes, jurusanRes] =
-      await Promise.all([
-        apiGet(`/jadwal?${taParam}${guruParam}`),
-        apiGet(`/kelas?${taParam}`),
-        apiGet("/guru"),
-        apiGet("/mapel"),
-        apiGet("/jurusan"),
-      ]);
+      await Promise.all(baseRequests);
+
     _jKelas = kelasRes.data;
     _jGurus = guruRes.data;
     _jMapels = mapelRes.data;
     window._jJurusans = jurusanRes.data;
 
     const weekInfo = updateWeekInfo();
+
+    let filteredData = jadwalRes.data;
+    if (currentKelasFilter) {
+      filteredData = filteredData.filter(
+        (j) =>
+          j.kelas_nama &&
+          (j.kelas_nama === currentKelasFilter ||
+            j.kelas_nama.endsWith(" " + currentKelasFilter)),
+      );
+    }
+    if (currentTipeFilter !== "semua") {
+      filteredData = filteredData.filter((j) =>
+        currentTipeFilter === "teori"
+          ? j.tipe_sesi === "teori" || !j.tipe_sesi
+          : j.tipe_sesi === "praktek",
+      );
+    }
+
     setContent(`
       <div class="space-y-5">
         <!-- Info Blok Minggu -->
@@ -1842,16 +2020,18 @@ async function renderJadwal() {
             </p>
             <div class="grid grid-cols-5 gap-3">
               ${jurusanRes.data
-                .map(
-                  (j) => `
-              <div class="border-2 border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/30 rounded-xl p-3 text-center">
-                <div class="font-black text-2xl text-orange-500">${j.kode} <span class="text-2xl">1</span></div>
+                .map((j) => {
+                  const kelasName = `${j.kode} 1`;
+                  const isActive = currentKelasFilter === kelasName;
+                  return `
+              <div onclick="filterByKelas('${kelasName}')" class="cursor-pointer transition-all hover:scale-105 border-2 ${isActive ? "border-orange-500 ring-4 ring-orange-500/20" : "border-orange-300 dark:border-orange-700"} bg-orange-50 dark:bg-orange-950/30 rounded-xl p-3 text-center">
+                <div class="font-black text-2xl text-orange-500">${j.kode} <span class="text-2xl">1</span> ${isActive ? '<i class="fas fa-check-circle text-sm"></i>' : ""}</div>
                 <div class="text-xs text-gray-400 mt-0.5">${j.nama}</div>
                 <div class="mt-2">
                   <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">→ Jurusan 1</span>
                 </div>
-              </div>`,
-                )
+              </div>`;
+                })
                 .join("")}
             </div>
           </div>
@@ -1863,16 +2043,18 @@ async function renderJadwal() {
             </p>
             <div class="grid grid-cols-5 gap-3">
               ${jurusanRes.data
-                .map(
-                  (j) => `
-              <div class="border-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 rounded-xl p-3 text-center">
-                <div class="font-black text-2xl text-blue-500">${j.kode} <span class="text-2xl">2</span></div>
+                .map((j) => {
+                  const kelasName = `${j.kode} 2`;
+                  const isActive = currentKelasFilter === kelasName;
+                  return `
+              <div onclick="filterByKelas('${kelasName}')" class="cursor-pointer transition-all hover:scale-105 border-2 ${isActive ? "border-blue-500 ring-4 ring-blue-500/20" : "border-blue-300 dark:border-blue-700"} bg-blue-50 dark:bg-blue-950/30 rounded-xl p-3 text-center">
+                <div class="font-black text-2xl text-blue-500">${j.kode} <span class="text-2xl">2</span> ${isActive ? '<i class="fas fa-check-circle text-sm"></i>' : ""}</div>
                 <div class="text-xs text-gray-400 mt-0.5">${j.nama}</div>
                 <div class="mt-2">
                   <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">→ Jurusan 2</span>
                 </div>
-              </div>`,
-                )
+              </div>`;
+                })
                 .join("")}
             </div>
           </div>
@@ -1885,7 +2067,19 @@ async function renderJadwal() {
         <!-- Daftar Jadwal -->
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow overflow-hidden">
           <div class="p-4 border-b dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
-            <h3 class="font-black text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wider">Jadwal Mengajar (${jadwalRes.data.length})</h3>
+            <div class="flex items-center flex-wrap gap-3">
+              <div class="flex flex-col">
+                <h3 class="font-black text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wider">
+                  Jadwal Mengajar ${currentKelasFilter ? `<span class="text-blue-600 dark:text-blue-400 ml-1">— Kelas ${currentKelasFilter}</span>` : ""} (${filteredData.length})
+                </h3>
+                ${currentKelasFilter ? `<button onclick="filterByKelas(null)" class="text-left text-[10px] font-bold text-red-500 hover:underline mt-0.5"><i class="fas fa-times mr-1"></i>Hapus Filter Kelas</button>` : ""}
+              </div>
+              <div class="flex bg-gray-100 dark:bg-slate-900 rounded-xl p-1 gap-0.5">
+                <button onclick="changeTipeFilter('semua')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTipeFilter === "semua" ? "bg-white dark:bg-slate-700 shadow text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-slate-400 hover:text-gray-700"}">Semua</button>
+                <button onclick="changeTipeFilter('teori')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTipeFilter === "teori" ? "bg-white dark:bg-slate-700 shadow text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-slate-400 hover:text-gray-700"}">Teori</button>
+                <button onclick="changeTipeFilter('praktek')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${currentTipeFilter === "praktek" ? "bg-white dark:bg-slate-700 shadow text-green-600 dark:text-green-400" : "text-gray-500 dark:text-slate-400 hover:text-gray-700"}">Praktek</button>
+              </div>
+            </div>
             ${
               currentUser.role === "admin"
                 ? `
@@ -1912,8 +2106,8 @@ async function renderJadwal() {
               </tr></thead>
               <tbody>
                 ${
-                  jadwalRes.data.length
-                    ? jadwalRes.data
+                  filteredData.length
+                    ? filteredData
                         .map(
                           (j) => `
                   <tr class="border-t dark:border-slate-700 table-row-hover">
@@ -1945,6 +2139,16 @@ async function renderJadwal() {
   } catch (err) {
     setContent(errHTML(err.message));
   }
+}
+
+async function filterByKelas(kelasName) {
+  currentKelasFilter = kelasName;
+  await renderJadwal();
+}
+
+function changeTipeFilter(val) {
+  currentTipeFilter = val;
+  renderJadwal();
 }
 
 function showAddJadwalModal() {

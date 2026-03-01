@@ -180,7 +180,7 @@ router.get(
   async (req, res) => {
     try {
       const { tahun_ajaran_id, kelas_id } = req.query;
-      let where = ["s.is_active=1"],
+      let where = ["u.is_active=1"],
         params = [];
       if (tahun_ajaran_id) {
         where.push("s.tahun_ajaran_id=?");
